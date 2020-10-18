@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "open-pond-protocol",
+    "open-pond"
+]

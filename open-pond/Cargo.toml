@@ -1,0 +1,8 @@
+[package]
+name = "open-pool"
+version = "0.1.0"
+authors = ["William Greer <wgreer184@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+open-pond-protocol = { path = "../open-pond-protocol", version = "0.1.0"}
