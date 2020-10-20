@@ -3,7 +3,7 @@ providing a base infrastructure for developers to build elegant decentralized ap
 
 ## Installation
 
-To run an Open Pond node, you need to download and install the [Rust](rust-lang.org/tools/install) 
+To run an Open Pond node, you need to download and install the [Rust](https://rust-lang.org/tools/install) 
 programming language and the Cargo package manager to build binaries.
 
 ## Usage
