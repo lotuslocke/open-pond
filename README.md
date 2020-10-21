@@ -39,7 +39,7 @@ For features, simply provide a brief description of the feature and any design d
 clarity to the work that needs to be done for the feature to be considered "complete". 
 
 When setting up a Pull Request, remember to reference the issue number in the request so we know
-what to look for in review. Make sure the code is clean and free of extraneous comments or notes.
-We'll get to the Pull Request as soon as we can and give our feedback on the contribution if any
-is warranted. Once the request passes review, the issue will be closed and the contribution should
-now appear in the `main` branch. 
+what to look for during the review. Make sure the code is clean and free of extraneous comments or
+notes. We'll get to the Pull Request as soon as we can and give our feedback on the contribution if
+any is warranted. Once the request passes review, the issue will be closed and the contribution
+should now appear in the `main` branch. 
