@@ -36,11 +36,12 @@ fn serve(mut stream: TcpStream) -> std::io::Result<()> {
     loop {
         thread::sleep(time::Duration::new(1, 0));
 
-        loop {
-            let mut mail = String::new();
-            io::stdin().read_line(&mut mail)?;
+        let mut mail = String::new();
+        if io::stdin().read_line(&mut mail).is_ok() {
             println!("Sending out: {}", mail);
-            stream.write(mail.as_bytes())?;
+            stream.write_all(mail.as_bytes())?;
+        } else {
+            break;
         }
     }
     Ok(())
@@ -50,8 +51,11 @@ fn request(mut stream: TcpStream) -> std::io::Result<()> {
     loop {
         let mut response = [0; 1024];
         thread::sleep(time::Duration::new(1, 0));
-        stream.read(&mut response)?;
-        println!("Response: {}", std::str::from_utf8(&response).unwrap());
+        if stream.read_exact(&mut response).is_ok() {
+            println!("Response: {}", std::str::from_utf8(&response).unwrap());
+        } else {
+            break;
+        }
     }
     Ok(())
 }
