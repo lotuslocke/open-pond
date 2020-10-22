@@ -1,8 +1,8 @@
+use open_pond_protocol::{start_peer_pool, start_servicer};
 use std::env;
 use std::thread;
 
-use open_pond_protocol::{start_peer_pool, start_servicer};
-
+/// Thread that starts an active Open Pond node
 fn main() -> std::io::Result<()> {
     let server_address = env::args()
         .nth(1)
@@ -12,7 +12,7 @@ fn main() -> std::io::Result<()> {
         .unwrap_or_else(|| "127.0.0.1:8081".to_string());
 
     let servicer_handle = thread::spawn(|| start_servicer(server_address));
-    println!("Server spawned");
+    println!("Open Pond node started");
 
     start_peer_pool(peer_address)?;
 
