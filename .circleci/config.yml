@@ -18,7 +18,7 @@ jobs:
             cargo fmt -- --check
       - run:
           name: Verify Code Builds
-          command: cargo build --all --release
+          command: cargo build --workspace --release
       - run:
           name: Verify Tests Pass
-          command: cargo test --all --release
+          command: cargo test --workspace --release
