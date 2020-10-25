@@ -19,7 +19,7 @@ cargo run "127.0.0.1:8091" "127.0.0.1.8090"
 This command will start a node and if connected to another node will allow command line
 communication between the two nodes.
 
-# Bug Reporting
+## Bug Reporting
 
 To report a bug or defect, it is helpful to understand a user's development environment and the
 extent of the abnormal behavior they are experiencing. Simply open a new issue and provide a brief
@@ -31,7 +31,7 @@ In a separate paragraph describe the unexpected or undesired behavior. The more 
 description is, the more likely we will be able to pinpoint the issue. Logs and screenshots
 demonstrating the bug or defect are helpful as well.
 
-# Contributions
+## Contributions
 
 To contribute to the project, either open a new issue for a bug or feature that currently is not
 listed there or find a bug or feature present in the issue list that you would like to address. 

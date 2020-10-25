@@ -1,0 +1,24 @@
+version: 2.1
+jobs: 
+  build: 
+    docker: 
+      - image: rust:1
+    steps:
+      - checkout
+      - run:
+          name: Verify Clean Code
+          command: |
+            rustup toolchain install stable-x86_64-unknown-linux-gnu
+            rustup component add clippy
+            cargo clippy
+      - run:
+          name: Verify Proper Formatting
+          command: |
+            rustup component add rustfmt
+            cargo fmt -- --check
+      - run:
+          name: Verify Code Builds
+          command: cargo build --workspace --release
+      - run:
+          name: Verify Tests Pass
+          command: cargo test --workspace --release
