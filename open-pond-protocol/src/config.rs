@@ -7,7 +7,7 @@ use std::io::Read;
 pub struct Config {
     /// Address of the servicer
     pub servicer: Address,
-    /// Address of peers
+    /// Peer addresses
     pub peers: Vec<Address>,
 }
 

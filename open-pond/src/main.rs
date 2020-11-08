@@ -17,7 +17,7 @@ fn main() -> std::io::Result<()> {
     println!("Open Pond Node started: {}", config.servicer.name);
 
     // Start peer pool
-    start_peer_pool(config.peers[0].address.clone())?;
+    start_peer_pool(config.peers)?;
 
     match servicer_handle.join() {
         Ok(_) => (),

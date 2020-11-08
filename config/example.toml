@@ -1,11 +1,11 @@
-[me]
+[servicer]
 address = "127.0.0.1:8081"
-name = "My Node"
-
-[[peers]]
-address = "127.0.0.1:8081"
-name = "Loopback Node"
+name = "Michael"
 
 [[peers]]
 address = "127.0.0.1:8082"
-name = "Other Node"
+name = "Andy"
+
+# [[peers]]
+# address = "127.0.0.1:8083"
+# name = "Stephanie"
