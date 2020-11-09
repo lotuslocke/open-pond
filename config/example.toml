@@ -1,11 +1,11 @@
 [servicer]
 address = "127.0.0.1:8081"
-name = "Michael"
+name = "Antelope"
 
 [[peers]]
 address = "127.0.0.1:8082"
-name = "Andy"
+name = "Bear"
 
-# [[peers]]
-# address = "127.0.0.1:8083"
-# name = "Stephanie"
+[[peers]]
+address = "127.0.0.1:8083"
+name = "Cheetah"
