@@ -1,3 +1,4 @@
+use crate::message::Message;
 use std::io::{self, Write};
 use std::net::{TcpListener, TcpStream};
 use std::thread;
@@ -24,10 +25,11 @@ fn serve(mut stream: TcpStream) -> std::io::Result<()> {
     loop {
         thread::sleep(time::Duration::new(1, 0));
 
-        let mut mail = String::new();
-        if io::stdin().read_line(&mut mail).is_ok() {
-            println!("Sending out: {}", mail);
-            stream.write_all(mail.as_bytes())?;
+        let mut payload = String::new();
+        if io::stdin().read_line(&mut payload).is_ok() {
+            println!("Sending out: {}", payload);
+            let message = Message::new(1, payload.as_bytes().to_vec()).unwrap();
+            stream.write_all(&message.as_bytes().unwrap()).unwrap();
         } else {
             break;
         }

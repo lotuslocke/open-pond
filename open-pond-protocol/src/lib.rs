@@ -1,5 +1,6 @@
 //! Library that implements the Open Pond Protocol
 mod config;
+mod message;
 mod peer_pool;
 mod servicer;
 

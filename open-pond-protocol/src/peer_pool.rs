@@ -1,4 +1,5 @@
 use crate::config::Address;
+use crate::message::Message;
 use std::io::Read;
 use std::iter;
 use std::net::TcpStream;
@@ -27,7 +28,11 @@ fn request(mut stream: TcpStream) -> std::io::Result<()> {
         let mut response = [0; 1024];
         thread::sleep(time::Duration::new(1, 0));
         if stream.read(&mut response).is_ok() {
-            println!("Response: {}", std::str::from_utf8(&response).unwrap());
+            let message: Message = Message::from_bytes((&response).to_vec()).unwrap();
+            println!(
+                "Received: {}",
+                std::str::from_utf8(&message.payload).unwrap()
+            );
         }
     }
 }
