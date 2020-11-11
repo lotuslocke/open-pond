@@ -9,3 +9,9 @@ name = "Bear"
 [[peers]]
 address = "127.0.0.1:8083"
 name = "Cheetah"
+
+[[apps]]
+id = 1
+request = "127.0.0.1:9090"
+servicer = "127.0.0.1:9091"
+name = "Akron"

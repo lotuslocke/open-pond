@@ -9,6 +9,8 @@ pub struct Config {
     pub servicer: Address,
     /// Peer addresses
     pub peers: Vec<Address>,
+    /// Applications
+    pub apps: Vec<Application>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -16,6 +18,19 @@ pub struct Config {
 pub struct Address {
     /// Address of node (IP:Port)
     pub address: String,
+    /// Human readable identifier
+    pub name: String,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+/// Structure to hold application information of Open Pond Nodes
+pub struct Application {
+    /// Unique identifier of application
+    pub id: u8,
+    /// Requests application endpoint
+    pub request: String,
+    /// Servicer application endpoint
+    pub servicer: String,
     /// Human readable identifier
     pub name: String,
 }

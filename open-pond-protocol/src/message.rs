@@ -5,6 +5,7 @@ const MAX_PACKET_SIZE: usize = 1024;
 const MAX_PAYLOAD_SIZE: usize = 1020;
 
 // Structure to hold Open Pond Protocol messages
+#[derive(Clone)]
 pub struct Message {
     // Unique identifier for application
     pub id: u8,

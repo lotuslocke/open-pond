@@ -13,11 +13,12 @@ fn main() -> std::io::Result<()> {
 
     // Start servicer
     let servicer_address = config.servicer.address.clone();
-    let servicer_handle = thread::spawn(|| start_servicer(servicer_address));
+    let servicer_endpoints = config.apps.clone();
+    let servicer_handle = thread::spawn(|| start_servicer(servicer_address, servicer_endpoints));
     println!("Open Pond Node started: {}", config.servicer.name);
 
     // Start peer pool
-    start_peer_pool(config.peers)?;
+    start_peer_pool(config.peers, config.apps)?;
 
     match servicer_handle.join() {
         Ok(_) => (),
