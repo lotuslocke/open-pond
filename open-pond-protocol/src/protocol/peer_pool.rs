@@ -1,9 +1,8 @@
-use crate::app_manager::AppManager;
 use crate::config::{Address, Application};
-use crate::message::Message;
+use crate::protocol::app_manager::AppManager;
+use crate::protocol::portal_manager::PortalManager;
 use crate::queue::MessageQueue;
 
-use std::io::{Read, Write};
 use std::iter;
 use std::net::{TcpStream, UdpSocket};
 use std::sync::Arc;
@@ -27,7 +26,7 @@ pub fn start_peer_pool(peers: Vec<Address>, apps: Vec<Application>) -> std::io::
             outgoing: outgoing.clone(),
         };
 
-        AppManager::run(manager);
+        thread::spawn(|| AppManager::run(manager));
         queues.push(app_mailbox);
     }
 
@@ -38,45 +37,14 @@ pub fn start_peer_pool(peers: Vec<Address>, apps: Vec<Application>) -> std::io::
             if !active[i] {
                 if let Ok(stream) = TcpStream::connect(peer.address.clone()) {
                     println!("{} accepted connection request", peer.name.clone());
-                    let peer = PoolThread {
+                    let to_peer = PortalManager {
                         stream,
                         incoming: incoming.clone(),
                         outgoing: outgoing.clone(),
                     };
-                    thread::spawn(|| PoolThread::request(peer));
+                    thread::spawn(|| PortalManager::start_portal(to_peer));
                     active[i] = true;
                 }
-            }
-        }
-    }
-}
-
-struct PoolThread {
-    stream: TcpStream,
-    incoming: Arc<Vec<Arc<MessageQueue>>>,
-    outgoing: Arc<MessageQueue>,
-}
-
-impl PoolThread {
-    fn request(mut thread: PoolThread) -> std::io::Result<()> {
-        loop {
-            thread::sleep(time::Duration::new(1, 0));
-
-            // Read incoming responses if any are waiting
-            let mut response = [0; 1024];
-            if let Ok(size) = thread.stream.read(&mut response) {
-                let message: Message = Message::from_bytes((&response[0..size]).to_vec()).unwrap();
-                let id = message.id as usize;
-                thread.incoming[id].push(message).unwrap();
-            }
-
-            // Send outgoing requests if any are waiting
-            if thread.outgoing.size() > 0 {
-                let message = thread.outgoing.pop().unwrap();
-                thread
-                    .stream
-                    .write_all(&message.as_bytes().unwrap())
-                    .unwrap();
             }
         }
     }
