@@ -1,6 +1,7 @@
 use crate::config::Application;
 use crate::protocol::app_manager::AppManager;
 use crate::protocol::portal_manager::PortalManager;
+use crate::protocol::ProtocolResult;
 use crate::queue::MessageQueue;
 
 use std::net::{TcpListener, UdpSocket};
@@ -8,7 +9,7 @@ use std::sync::Arc;
 use std::thread;
 
 /// Starts the servicer handling threads
-pub fn start_servicer(address: String, apps: Vec<Application>) -> std::io::Result<()> {
+pub fn start_servicer(address: String, apps: Vec<Application>) -> ProtocolResult<()> {
     let server = TcpListener::bind(address)?;
     let outgoing = Arc::new(MessageQueue::new());
     let mut queues: Vec<Arc<MessageQueue>> = Vec::new();
@@ -18,7 +19,7 @@ pub fn start_servicer(address: String, apps: Vec<Application>) -> std::io::Resul
 
         let manager = AppManager {
             id: app.id,
-            socket: UdpSocket::bind(app.servicer.clone()).unwrap(),
+            socket: UdpSocket::bind(app.servicer.clone())?,
             incoming: app_mailbox.clone(),
             outgoing: outgoing.clone(),
         };

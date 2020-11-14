@@ -1,6 +1,7 @@
 use crate::config::{Address, Application};
 use crate::protocol::app_manager::AppManager;
 use crate::protocol::portal_manager::PortalManager;
+use crate::protocol::ProtocolResult;
 use crate::queue::MessageQueue;
 
 use std::iter;
@@ -10,7 +11,7 @@ use std::thread;
 use std::time;
 
 /// Spawns request threads for each peer in the active peer pool
-pub fn start_peer_pool(peers: Vec<Address>, apps: Vec<Application>) -> std::io::Result<()> {
+pub fn start_peer_pool(peers: Vec<Address>, apps: Vec<Application>) -> ProtocolResult<()> {
     let mut active: Vec<bool> = iter::repeat(false).take(peers.len()).collect();
 
     let outgoing = Arc::new(MessageQueue::new());
@@ -21,7 +22,7 @@ pub fn start_peer_pool(peers: Vec<Address>, apps: Vec<Application>) -> std::io::
 
         let manager = AppManager {
             id: app.id,
-            socket: UdpSocket::bind(app.servicer.clone()).unwrap(),
+            socket: UdpSocket::bind(app.servicer.clone())?,
             incoming: app_mailbox.clone(),
             outgoing: outgoing.clone(),
         };
