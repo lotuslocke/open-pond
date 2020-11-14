@@ -2,6 +2,7 @@ use crate::message::Message;
 use crate::protocol::ProtocolResult;
 use crate::queue::MessageQueue;
 
+use byteorder::{BigEndian, ByteOrder};
 use std::net::{SocketAddr, UdpSocket};
 use std::sync::Arc;
 use std::thread;
@@ -29,20 +30,13 @@ impl AppManager {
             let mut request = [0; 1];
             if let Ok((_, address)) = manager.socket.recv_from(&mut request) {
                 match request[0] {
-                    1 => AppManager::read(&manager, address)?,
-                    2 => AppManager::write(&manager, address)?,
+                    1 => AppManager::write(&manager, address)?,
+                    2 => AppManager::read(&manager, address)?,
                     3 => AppManager::request_length(&manager, address)?,
                     _ => (),
                 };
             }
         }
-    }
-
-    // Function to read a message from an application
-    fn read(manager: &AppManager, app: SocketAddr) -> ProtocolResult<()> {
-        let message = manager.incoming.pop()?;
-        manager.socket.send_to(&message.payload, app)?;
-        Ok(())
     }
 
     // Function to write a message from an application
@@ -52,8 +46,17 @@ impl AppManager {
         let message = Message::new(manager.id, payload[0..len].to_vec())?;
         manager.outgoing.push(message)?;
 
-        let response = [len as u8];
+        let length = len as u16;
+        let mut response = [0; 2];
+        BigEndian::write_u16(&mut response, length);
         manager.socket.send_to(&response, app)?;
+        Ok(())
+    }
+
+    // Function to read a message from an application
+    fn read(manager: &AppManager, app: SocketAddr) -> ProtocolResult<()> {
+        let message = manager.incoming.pop()?;
+        manager.socket.send_to(&message.payload, app)?;
         Ok(())
     }
 
