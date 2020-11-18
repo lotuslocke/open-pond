@@ -27,8 +27,8 @@ pub struct Address {
 pub struct Application {
     /// Unique identifier of application
     pub id: u8,
-    /// Requests application endpoint
-    pub request: String,
+    /// Requester application endpoint
+    pub requester: String,
     /// Servicer application endpoint
     pub servicer: String,
     /// Human readable identifier

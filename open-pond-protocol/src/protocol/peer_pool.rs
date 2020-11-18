@@ -22,7 +22,7 @@ pub fn start_peer_pool(peers: Vec<Address>, apps: Vec<Application>) -> ProtocolR
 
         let manager = AppManager {
             id: app.id,
-            socket: UdpSocket::bind(app.servicer.clone())?,
+            socket: UdpSocket::bind(app.requester.clone())?,
             incoming: app_mailbox.clone(),
             outgoing: outgoing.clone(),
         };
