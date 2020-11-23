@@ -3,21 +3,25 @@ use crate::message::Message;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use thiserror::Error;
+use rand::prelude::*;
 
 // Thread safe structure used to hold messages
+#[derive(Debug)]
 pub struct MessageQueue {
     // Thread safe message queue
-    pub queue: Arc<Mutex<Vec<Message>>>,
+    pub queue: Mutex<Vec<Message>>,
     // Size of message queue
-    pub size: Arc<AtomicUsize>,
+    pub size: AtomicUsize,
+    pub id: u8,
 }
 
 impl MessageQueue {
     // Function to generate a new Open Pond message queue
     pub fn new() -> MessageQueue {
         MessageQueue {
-            queue: Arc::new(Mutex::new(Vec::new())),
-            size: Arc::new(AtomicUsize::new(0)),
+            queue: Mutex::new(Vec::new()),
+            size: AtomicUsize::new(0),
+            id: random(),
         }
     }
 

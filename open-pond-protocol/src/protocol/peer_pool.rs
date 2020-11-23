@@ -22,7 +22,7 @@ pub fn start_peer_pool(peers: Vec<Address>, apps: Vec<Application>) -> ProtocolR
 
         let manager = AppManager {
             id: app.id,
-            socket: UdpSocket::bind(app.requester.clone())?,
+            socket: UdpSocket::bind(app.servicer.clone())?,
             incoming: app_mailbox.clone(),
             outgoing: outgoing.clone(),
         };
@@ -31,12 +31,15 @@ pub fn start_peer_pool(peers: Vec<Address>, apps: Vec<Application>) -> ProtocolR
         queues.push(app_mailbox);
     }
 
+    println!("DDD outgoing buffer {}: {}", outgoing.id, Arc::strong_count(&outgoing));
+
     let incoming = Arc::new(queues);
     loop {
         thread::sleep(time::Duration::new(1, 0));
         for (i, peer) in peers.iter().enumerate() {
             if !active[i] {
                 if let Ok(stream) = TcpStream::connect(peer.address.clone()) {
+                    stream.set_nonblocking(true)?;
                     println!("{} accepted connection request", peer.name.clone());
                     let to_peer = PortalManager {
                         stream,

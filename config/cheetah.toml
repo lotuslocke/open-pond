@@ -1,10 +1,10 @@
 [servicer]
-address = "127.0.0.1:8081"
-name = "Antelope"
-
-[[peers]]
 address = "127.0.0.1:8082"
 name = "Bear"
+
+[[peers]]
+address = "127.0.0.1:8081"
+name = "Antelope"
 
 [[peers]]
 address = "127.0.0.1:8083"
@@ -12,6 +12,6 @@ name = "Cheetah"
 
 [[apps]]
 id = 0
-requester = "127.0.0.1:9090"
-servicer = "127.0.0.1:9091"
+requester = "127.0.0.1:9092"
+servicer = "127.0.0.1:9093"
 name = "Akron"

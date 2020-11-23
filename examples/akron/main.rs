@@ -15,6 +15,9 @@ fn main() {
     // Interacts with servicer endpoint
     let servicer = APISocket::new(config.apps[0].servicer.clone()).unwrap();
 
+    println!("servicer: {}", config.apps[0].servicer);
+    println!("requester: {}", config.apps[0].requester);
+
     // Interacts with requester endpoint
     let requester = config.apps[0].requester.clone();
     let requester_socket = APISocket::new(requester).unwrap();
@@ -28,6 +31,7 @@ fn main() {
         let mut input = String::new();
         if io::stdin().read_line(&mut input).is_ok() {
             let message = format!("{}: {}", config.servicer.name, input);
+            println!("Message: {}", message);
             servicer.opp_write(message.as_bytes().to_vec()).unwrap();
         }
     }

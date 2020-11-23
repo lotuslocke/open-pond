@@ -21,12 +21,14 @@ pub struct PortalManager {
 impl PortalManager {
     // Function that runs the thread managing the portal between nodes
     pub fn start_portal(mut manager: PortalManager) -> ProtocolResult<()> {
+        println!("Portal outgoing buffer {}: {:?}", manager.outgoing.id, manager.outgoing);
         loop {
-            thread::sleep(time::Duration::new(1, 0));
+            thread::sleep(time::Duration::new(5, 0));
 
             // Read incoming messages if any are waiting
             let mut request = [0; 1024];
             if let Ok(size) = manager.stream.read(&mut request) {
+                println!("Shouldn't work");
                 let message = Message::from_bytes((&request[0..size]).to_vec())?;
                 let id = message.id as usize;
                 manager.incoming[id].push(message)?;
@@ -34,6 +36,7 @@ impl PortalManager {
 
             // Send outgoing messages if any are waiting
             if manager.outgoing.size() > 0 {
+                println!("Sending message away...");
                 let message = manager.outgoing.pop()?;
                 manager.stream.write_all(&message.as_bytes()?)?;
             }
