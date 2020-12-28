@@ -5,15 +5,30 @@ use std::io::Read;
 #[derive(Deserialize, Debug)]
 /// Structure to hold Open Pond Node configuration
 pub struct Config {
-    /// Address of the servicer
-    pub servicer: Address,
-    /// Peer addresses
+    /// Protocol configuration settings
+    pub settings: Settings,
+    /// Address of the local computer
+    pub local: Address,
+    /// Addresses of the peer computers
     pub peers: Vec<Address>,
-    /// Applications
+    /// Applications detail
     pub apps: Vec<Application>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
+/// Structure to Open Pond Protocol settings
+pub struct Settings {
+    /// Requester write port
+    pub requester_write: u16,
+    /// Requester read port
+    pub requester_read: u16,
+    /// Servicer read port
+    pub servicer: u16,
+    /// Servicer manager port
+    pub servicer_manager: u16,
+}
+
+#[derive(Deserialize, Debug, Clone)]
 /// Structure to hold address information of Open Pond Nodes
 pub struct Address {
     /// Address of node (IP:Port)
@@ -27,10 +42,6 @@ pub struct Address {
 pub struct Application {
     /// Unique identifier of application
     pub id: u8,
-    /// Requester application endpoint
-    pub requester: String,
-    /// Servicer application endpoint
-    pub servicer: String,
     /// Human readable identifier
     pub name: String,
 }

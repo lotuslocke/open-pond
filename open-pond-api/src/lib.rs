@@ -1,48 +1,83 @@
-use byteorder::{BigEndian, ByteOrder};
-use std::net::UdpSocket;
+use open_pond_protocol::Settings;
+use std::net::{SocketAddr, UdpSocket};
 use thiserror::Error;
 
-/// Structure holding APISocket networking components
-pub struct APISocket {
-    // APISocket's UDP socket
-    socket: UdpSocket,
-    // Application manager access port
-    access_port: String,
+/// Structure holding interface networking components
+pub struct RequesterEndpoint {
+    // Request endpoint
+    requester_endpoint: UdpSocket,
+    // Requester write port
+    requester_write: u16,
+    // Requester read port
+    requester_read: u16,
+    // Application ID
+    app_id: u8,
 }
 
-impl APISocket {
-    /// Create a new API socket to read or write to
-    pub fn new(access_port: String) -> APIResult<APISocket> {
-        Ok(APISocket {
-            socket: UdpSocket::bind("0.0.0.0:0")?,
-            access_port,
-        })
+/// Structure holding interface networking components
+pub struct ServicerEndpoint {
+    // Servicer endpoint
+    servicer_endpoint: UdpSocket,
+    //
+    servicer_manager: u16,
+    // Application ID
+    app_id: u8,
+}
+
+/// Create a new interface objects to interface with the protocol
+pub fn new_interface(
+    settings: Settings,
+    app_id: u8,
+) -> APIResult<(RequesterEndpoint, ServicerEndpoint)> {
+    let requester_endpoint = RequesterEndpoint {
+        requester_endpoint: UdpSocket::bind("0.0.0.0:0")?,
+        requester_write: settings.requester_write,
+        requester_read: settings.requester_read,
+        app_id,
+    };
+
+    let servicer_endpoint = ServicerEndpoint {
+        servicer_endpoint: UdpSocket::bind("0.0.0.0:0")?,
+        servicer_manager: settings.servicer_manager,
+        app_id,
+    };
+
+    Ok((requester_endpoint, servicer_endpoint))
+}
+
+impl RequesterEndpoint {
+    /// Write request to requester
+    pub fn write_request(&self, mut data: Vec<u8>) -> APIResult<()> {
+        data.insert(0, self.app_id);
+        self.requester_endpoint
+            .send_to(&data, format!("0.0.0.0:{}", self.requester_write))?;
+        Ok(())
     }
 
-    /// Write data to the application manager
-    pub fn opp_write(&self, data: Vec<u8>) -> APIResult<u16> {
-        let mut length = [0; 2];
-        self.socket.send_to(&[1], self.access_port.clone())?;
-        self.socket.send_to(&data, self.access_port.clone())?;
-        self.socket.recv_from(&mut length)?;
-        Ok(BigEndian::read_u16(&length))
-    }
-
-    /// Request data from the application manager
-    pub fn opp_read(&self) -> APIResult<Vec<u8>> {
-        let mut data = [0; 1024];
-        self.socket.send_to(&[2], self.access_port.clone())?;
-        let (len, _) = self.socket.recv_from(&mut data)?;
+    /// Read response from requester mailbox
+    pub fn read_response(&self) -> APIResult<Vec<u8>> {
+        self.requester_endpoint
+            .send_to(&[self.app_id], format!("0.0.0.0:{}", self.requester_read))?;
+        let mut data = [0; 1018];
+        let (len, _) = self.requester_endpoint.recv_from(&mut data)?;
         Ok(data[0..len].to_vec())
     }
+}
 
-    /// Request the number of messages waiting to be read
-    /// from the application manager
-    pub fn opp_request_length(&self) -> APIResult<u8> {
-        let mut length = [0; 1];
-        self.socket.send_to(&[3], self.access_port.clone())?;
-        self.socket.recv_from(&mut length)?;
-        Ok(length[0])
+impl ServicerEndpoint {
+    /// Read request from the servicer
+    pub fn read_request(&self) -> APIResult<(Vec<u8>, SocketAddr)> {
+        self.servicer_endpoint
+            .send_to(&[self.app_id], format!("0.0.0.0:{}", self.servicer_manager))?;
+        let mut data = [0; 1018];
+        let (len, address) = self.servicer_endpoint.recv_from(&mut data)?;
+        Ok((data[0..len].to_vec(), address))
+    }
+
+    /// Write response back to requester
+    pub fn write_response(&self, return_address: SocketAddr, data: Vec<u8>) -> APIResult<()> {
+        self.servicer_endpoint.send_to(&data, return_address)?;
+        Ok(())
     }
 }
 

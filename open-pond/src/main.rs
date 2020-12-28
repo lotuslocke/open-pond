@@ -1,5 +1,5 @@
 use open_pond_protocol::ProtocolResult;
-use open_pond_protocol::{parse_config, start_peer_pool, start_servicer};
+use open_pond_protocol::{parse_config, start_requester, start_servicer};
 use std::env;
 use std::thread;
 
@@ -13,13 +13,13 @@ fn main() -> ProtocolResult<()> {
     let config = parse_config(config_file)?;
 
     // Start servicer
-    let servicer_address = config.servicer.address.clone();
-    let servicer_endpoints = config.apps.clone();
-    let servicer_handle = thread::spawn(|| start_servicer(servicer_address, servicer_endpoints));
-    println!("Open Pond Node started: {}", config.servicer.name);
+    let servicer_settings = config.settings.clone();
+    let servicer_handle = thread::spawn(|| start_servicer(servicer_settings));
+    println!("Open Pond Node started: {}", config.local.name);
 
-    // Start peer pool
-    start_peer_pool(config.peers, config.apps)?;
+    // Start requester
+    let requester_settings = config.settings.clone();
+    thread::spawn(|| start_requester(requester_settings, config.peers));
 
     match servicer_handle.join() {
         Ok(_) => (),

@@ -2,24 +2,26 @@ use byteorder::{BigEndian, ByteOrder, WriteBytesExt};
 use thiserror::Error;
 
 const MAX_PACKET_SIZE: usize = 1024;
-const MAX_PAYLOAD_SIZE: usize = 1020;
+const MAX_PAYLOAD_SIZE: usize = 1018;
 
 // Structure to hold Open Pond Protocol messages
 #[derive(Clone, Debug)]
 pub struct Message {
     // Unique identifier for application
     pub id: u8,
+    // Placeholder byte
+    pub reserved: u8,
+    // Response return port
+    pub port: u16,
     // Length of the message
     pub length: u16,
-    // Segmentation flag
-    pub flag: u8,
     // Message payload
     pub payload: Vec<u8>,
 }
 
 impl Message {
     // Function to generate a new Open Pond message
-    pub fn new(id: u8, payload: Vec<u8>) -> MessageResult<Message> {
+    pub fn new(id: u8, port: u16, payload: Vec<u8>) -> MessageResult<Message> {
         if payload.len() > MAX_PAYLOAD_SIZE {
             return Err(MessageError::PayloadSizeExceeded {
                 size: payload.len(),
@@ -28,8 +30,9 @@ impl Message {
 
         Ok(Message {
             id,
+            reserved: 0,
+            port,
             length: payload.len() as u16,
-            flag: 0,
             payload,
         })
     }
@@ -42,9 +45,10 @@ impl Message {
 
         Ok(Message {
             id: bytes[0],
-            length: BigEndian::read_u16(&bytes[1..3]),
-            flag: bytes[3],
-            payload: bytes[4..].to_vec(),
+            reserved: bytes[1],
+            port: BigEndian::read_u16(&bytes[2..4]),
+            length: BigEndian::read_u16(&bytes[4..6]),
+            payload: bytes[6..].to_vec(),
         })
     }
 
@@ -53,8 +57,9 @@ impl Message {
         let mut packet = Vec::with_capacity(MAX_PACKET_SIZE);
 
         packet.push(self.id);
+        packet.push(self.reserved);
+        packet.write_u16::<BigEndian>(self.port)?;
         packet.write_u16::<BigEndian>(self.length)?;
-        packet.push(self.flag);
         packet.extend(self.payload.clone());
 
         Ok(packet)

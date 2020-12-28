@@ -1,4 +1,10 @@
-[servicer]
+[settings]
+requester_write = 9090
+requester_read = 9091
+servicer = 9092
+servicer_manager = 9093
+
+[local]
 address = "127.0.0.1:8081"
 name = "Antelope"
 
@@ -12,6 +18,4 @@ name = "Cheetah"
 
 [[apps]]
 id = 0
-requester = "127.0.0.1:9090"
-servicer = "127.0.0.1:9091"
 name = "Akron"
