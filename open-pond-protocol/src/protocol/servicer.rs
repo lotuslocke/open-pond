@@ -13,9 +13,9 @@ pub fn start_servicer(settings: Settings) -> ProtocolResult<()> {
     let manager_port = settings.servicer_manager;
     thread::spawn(move || servicer(socket, manager_port));
 
-    // Generate manager for servicing requests between applications
+    // Start manager for servicing requests between applications
     let endpoint_socket = UdpSocket::bind(format!("0.0.0.0:{}", settings.servicer_manager))?;
-    thread::spawn(|| servicer_manager(endpoint_socket));
+    servicer_manager(endpoint_socket)?;
 
     Ok(())
 }
@@ -64,25 +64,21 @@ fn servicer_manager(socket: UdpSocket) -> ProtocolResult<()> {
 
     loop {
         let mut response = [0; 1024];
+        if let Ok((_, address)) = socket.recv_from(&mut response) {
+            let message = Message::from_bytes(response.to_vec())?;
 
-        // Place incoming responses into mailbox that corresponds with application
-        socket.recv_from(&mut response)?;
-        let message = Message::from_bytes(response.to_vec())?;
-        if let Some(mailbox) = mailboxes.get_mut(&message.id) {
-            mailbox.push(message);
-        } else {
-            let mut mailbox = Vec::new();
-            let id = message.id;
-            mailbox.push(message);
-            mailboxes.insert(id, mailbox);
-        }
-
-        // See if there is request for data from applications
-        let mut app_id = [0; 1];
-        if let Ok((_, address)) = socket.recv_from(&mut app_id) {
-            if let Some(mailbox) = mailboxes.get_mut(&app_id[0]) {
-                let request = mailbox.remove(0);
-                socket.send_to(&request.as_bytes()?, address)?;
+            if message.flags > 127 {
+                if let Some(mailbox) = mailboxes.get_mut(&message.id) {
+                    let request = mailbox.remove(0);
+                    socket.send_to(&request.as_bytes()?, address)?;
+                }
+            } else if let Some(mailbox) = mailboxes.get_mut(&message.id) {
+                mailbox.push(message);
+            } else {
+                let mut mailbox = Vec::new();
+                let id = message.id;
+                mailbox.push(message);
+                mailboxes.insert(id, mailbox);
             }
         }
     }

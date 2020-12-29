@@ -1,4 +1,4 @@
-use open_pond_protocol::Settings;
+use open_pond_protocol::{Message, MessageError, Settings};
 use std::net::{SocketAddr, UdpSocket};
 use thiserror::Error;
 
@@ -18,7 +18,7 @@ pub struct RequesterEndpoint {
 pub struct ServicerEndpoint {
     // Servicer endpoint
     servicer_endpoint: UdpSocket,
-    //
+    // Servicer manager port
     servicer_manager: u16,
     // Application ID
     app_id: u8,
@@ -56,8 +56,11 @@ impl RequesterEndpoint {
 
     /// Read response from requester mailbox
     pub fn read_response(&self) -> APIResult<Vec<u8>> {
-        self.requester_endpoint
-            .send_to(&[self.app_id], format!("0.0.0.0:{}", self.requester_read))?;
+        let message = Message::new(self.app_id, 0, Vec::new())?;
+        self.requester_endpoint.send_to(
+            &message.as_bytes()?,
+            format!("0.0.0.0:{}", self.requester_read),
+        )?;
         let mut data = [0; 1018];
         let (len, _) = self.requester_endpoint.recv_from(&mut data)?;
         Ok(data[0..len].to_vec())
@@ -67,8 +70,12 @@ impl RequesterEndpoint {
 impl ServicerEndpoint {
     /// Read request from the servicer
     pub fn read_request(&self) -> APIResult<(Vec<u8>, SocketAddr)> {
-        self.servicer_endpoint
-            .send_to(&[self.app_id], format!("0.0.0.0:{}", self.servicer_manager))?;
+        let mut message = Message::new(self.app_id, 0, Vec::new())?;
+        message.flags = 0x80;
+        self.servicer_endpoint.send_to(
+            &message.as_bytes()?,
+            format!("0.0.0.0:{}", self.servicer_manager),
+        )?;
         let mut data = [0; 1018];
         let (len, address) = self.servicer_endpoint.recv_from(&mut data)?;
         Ok((data[0..len].to_vec(), address))
@@ -86,6 +93,8 @@ impl ServicerEndpoint {
 pub enum APIError {
     #[error("Failure with socket operations")]
     SocketIO(#[from] std::io::Error),
+    #[error("Failure with message formatting")]
+    InvalidMessage(#[from] MessageError),
 }
 
 // Convenience alias for API results

@@ -7,10 +7,11 @@ const MAX_PAYLOAD_SIZE: usize = 1018;
 // Structure to hold Open Pond Protocol messages
 #[derive(Clone, Debug)]
 pub struct Message {
+    // Protocol flags
+    // 0x00 = Requester, 0x80 = Servicer
+    pub flags: u8,
     // Unique identifier for application
     pub id: u8,
-    // Placeholder byte
-    pub reserved: u8,
     // Response return port
     pub port: u16,
     // Length of the message
@@ -29,8 +30,8 @@ impl Message {
         }
 
         Ok(Message {
+            flags: 0,
             id,
-            reserved: 0,
             port,
             length: payload.len() as u16,
             payload,
@@ -44,8 +45,8 @@ impl Message {
         }
 
         Ok(Message {
-            id: bytes[0],
-            reserved: bytes[1],
+            flags: bytes[0],
+            id: bytes[1],
             port: BigEndian::read_u16(&bytes[2..4]),
             length: BigEndian::read_u16(&bytes[4..6]),
             payload: bytes[6..].to_vec(),
@@ -56,8 +57,8 @@ impl Message {
     pub fn as_bytes(&self) -> MessageResult<Vec<u8>> {
         let mut packet = Vec::with_capacity(MAX_PACKET_SIZE);
 
+        packet.push(self.flags);
         packet.push(self.id);
-        packet.push(self.reserved);
         packet.write_u16::<BigEndian>(self.port)?;
         packet.write_u16::<BigEndian>(self.length)?;
         packet.extend(self.payload.clone());
