@@ -1,5 +1,6 @@
 use open_pond_protocol::{Message, MessageError, Settings};
 use std::net::{SocketAddr, UdpSocket};
+use std::time::Duration;
 use thiserror::Error;
 
 /// Structure holding interface networking components
@@ -29,15 +30,19 @@ pub fn new_interface(
     settings: Settings,
     app_id: u8,
 ) -> APIResult<(RequesterEndpoint, ServicerEndpoint)> {
+    let requester_socket = UdpSocket::bind("0.0.0.0:0")?;
+    requester_socket.set_read_timeout(Some(Duration::from_millis(100)))?;
     let requester_endpoint = RequesterEndpoint {
-        requester_endpoint: UdpSocket::bind("0.0.0.0:0")?,
+        requester_endpoint: requester_socket,
         requester_write: settings.requester_write,
         requester_read: settings.requester_read,
         app_id,
     };
 
+    let servicer_socket = UdpSocket::bind("0.0.0.0:0")?;
+    servicer_socket.set_read_timeout(Some(Duration::from_millis(100)))?;
     let servicer_endpoint = ServicerEndpoint {
-        servicer_endpoint: UdpSocket::bind("0.0.0.0:0")?,
+        servicer_endpoint: servicer_socket,
         servicer_manager: settings.servicer_manager,
         app_id,
     };
@@ -47,43 +52,60 @@ pub fn new_interface(
 
 impl RequesterEndpoint {
     /// Write request to requester
-    pub fn write_request(&self, mut data: Vec<u8>) -> APIResult<()> {
-        data.insert(0, self.app_id);
-        self.requester_endpoint
-            .send_to(&data, format!("0.0.0.0:{}", self.requester_write))?;
+    pub fn write_request(&self, data: Vec<u8>) -> APIResult<()> {
+        let message = Message::new(self.app_id, data)?;
+        self.requester_endpoint.send_to(
+            &message.as_bytes()?,
+            format!("0.0.0.0:{}", self.requester_write),
+        )?;
         Ok(())
     }
 
     /// Read response from requester mailbox
     pub fn read_response(&self) -> APIResult<Vec<u8>> {
-        let message = Message::new(self.app_id, 0, Vec::new())?;
-        self.requester_endpoint.send_to(
-            &message.as_bytes()?,
-            format!("0.0.0.0:{}", self.requester_read),
-        )?;
-        let mut data = [0; 1018];
-        let (len, _) = self.requester_endpoint.recv_from(&mut data)?;
-        Ok(data[0..len].to_vec())
+        let mut message = Message::new(self.app_id, Vec::new())?;
+        message.flags = 0x80;
+        let mut data = [0; 1024];
+
+        loop {
+            self.requester_endpoint.send_to(
+                &message.as_bytes()?,
+                format!("0.0.0.0:{}", self.requester_read),
+            )?;
+
+            if let Ok((len, _)) = self.requester_endpoint.recv_from(&mut data) {
+                let message = Message::from_bytes(data[0..len].to_vec())?;
+                return Ok(message.payload);
+            }
+        }
     }
 }
 
 impl ServicerEndpoint {
     /// Read request from the servicer
     pub fn read_request(&self) -> APIResult<(Vec<u8>, SocketAddr)> {
-        let mut message = Message::new(self.app_id, 0, Vec::new())?;
+        let mut message = Message::new(self.app_id, Vec::new())?;
         message.flags = 0x80;
-        self.servicer_endpoint.send_to(
-            &message.as_bytes()?,
-            format!("0.0.0.0:{}", self.servicer_manager),
-        )?;
-        let mut data = [0; 1018];
-        let (len, address) = self.servicer_endpoint.recv_from(&mut data)?;
-        Ok((data[0..len].to_vec(), address))
+        let mut data = [0; 1024];
+
+        loop {
+            self.servicer_endpoint.send_to(
+                &message.as_bytes()?,
+                format!("0.0.0.0:{}", self.servicer_manager),
+            )?;
+            if let Ok((len, mut address)) = self.servicer_endpoint.recv_from(&mut data) {
+                let message = Message::from_bytes(data[0..len].to_vec())?;
+                address.set_port(message.port);
+                return Ok((message.payload, address));
+            }
+        }
     }
 
     /// Write response back to requester
     pub fn write_response(&self, return_address: SocketAddr, data: Vec<u8>) -> APIResult<()> {
-        self.servicer_endpoint.send_to(&data, return_address)?;
+        let message = Message::new(self.app_id, data)?;
+        self.servicer_endpoint
+            .send_to(&message.as_bytes()?, return_address)?;
         Ok(())
     }
 }

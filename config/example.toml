@@ -1,8 +1,7 @@
 [settings]
 requester_write = 9090
 requester_read = 9091
-servicer = 9092
-servicer_manager = 9093
+servicer_manager = 9092
 
 [local]
 address = "127.0.0.1:8081"

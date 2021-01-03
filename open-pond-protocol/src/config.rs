@@ -22,8 +22,6 @@ pub struct Settings {
     pub requester_write: u16,
     /// Requester read port
     pub requester_read: u16,
-    /// Servicer read port
-    pub servicer: u16,
     /// Servicer manager port
     pub servicer_manager: u16,
 }

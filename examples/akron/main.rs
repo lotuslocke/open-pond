@@ -24,6 +24,7 @@ fn main() {
 
     // Store messages from standard input
     loop {
+        thread::sleep(time::Duration::new(1, 0));
         let mut input = String::new();
         if io::stdin().read_line(&mut input).is_ok() {
             let message = format!("{}: {}", config.local.name, input);
@@ -57,10 +58,11 @@ fn service(endpoint: ServicerEndpoint, last_message: Arc<Mutex<(u8, String)>>) {
         thread::sleep(time::Duration::new(0, 100));
         let (request, return_address) = endpoint.read_request().unwrap();
         if let Ok(lock) = last_message.lock() {
+            let mut response = vec![lock.0; 1];
             if request[0] != lock.0 {
-                let response = lock.1.as_bytes().to_vec();
-                endpoint.write_response(return_address, response).unwrap();
+                response.append(&mut lock.1.as_bytes().to_vec());
             }
+            endpoint.write_response(return_address, response).unwrap();
         }
     }
 }

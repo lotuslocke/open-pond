@@ -7,9 +7,9 @@ use std::net::UdpSocket;
 use std::thread;
 
 /// Starts the servicer handling threads
-pub fn start_servicer(settings: Settings) -> ProtocolResult<()> {
+pub fn start_servicer(settings: Settings, local_address: String) -> ProtocolResult<()> {
     // Generate servicer for this portal
-    let socket = UdpSocket::bind(format!("0.0.0.0:{}", settings.servicer))?;
+    let socket = UdpSocket::bind(local_address)?;
     let manager_port = settings.servicer_manager;
     thread::spawn(move || servicer(socket, manager_port));
 
@@ -30,13 +30,13 @@ pub fn servicer(socket: UdpSocket, manager_port: u16) -> ProtocolResult<()> {
         // Validate message and spawn response handler
         let message = Message::from_bytes(request[0..len].to_vec())?;
         let return_address = format!("{}:{}", address.ip(), message.port);
-        thread::spawn(move || response_handler(message.payload, return_address, manager_port));
+        thread::spawn(move || response_handler(message, return_address, manager_port));
     }
 }
 
 /// These threads keeps track of responses to requests
 pub fn response_handler(
-    payload: Vec<u8>,
+    mut message: Message,
     return_address: String,
     manager_port: u16,
 ) -> ProtocolResult<()> {
@@ -44,13 +44,13 @@ pub fn response_handler(
 
     // Send message to application servicer manager
     let manager_address = format!("0.0.0.0:{}", manager_port);
-    socket.send_to(&payload, manager_address)?;
+    message.port = socket.local_addr()?.port();
+    socket.send_to(&message.as_bytes()?, manager_address)?;
 
-    // Recieve response back from application and send back to peers
-    let mut response = [0; 1019];
+    // Receive response back from application and send back to peers
+    let mut response = [0; 1024];
     let (len, _) = socket.recv_from(&mut response)?;
-    let message = Message::new(response[0], 0, response[1..len].to_vec())?;
-    socket.send_to(&message.as_bytes()?, return_address)?;
+    socket.send_to(&response[0..len], return_address)?;
     Ok(())
 }
 
@@ -63,14 +63,16 @@ fn servicer_manager(socket: UdpSocket) -> ProtocolResult<()> {
     let mut mailboxes: HashMap<u8, Vec<Message>> = HashMap::new();
 
     loop {
-        let mut response = [0; 1024];
-        if let Ok((_, address)) = socket.recv_from(&mut response) {
-            let message = Message::from_bytes(response.to_vec())?;
+        let mut request = [0; 1024];
+        if let Ok((len, address)) = socket.recv_from(&mut request) {
+            let message = Message::from_bytes(request[0..len].to_vec())?;
 
-            if message.flags > 127 {
+            if message.flags >= 0x80 {
                 if let Some(mailbox) = mailboxes.get_mut(&message.id) {
-                    let request = mailbox.remove(0);
-                    socket.send_to(&request.as_bytes()?, address)?;
+                    if !mailbox.is_empty() {
+                        let request = mailbox.remove(0);
+                        socket.send_to(&request.as_bytes()?, address)?;
+                    }
                 }
             } else if let Some(mailbox) = mailboxes.get_mut(&message.id) {
                 mailbox.push(message);

@@ -24,9 +24,10 @@ pub fn start_requester(settings: Settings, peers: Vec<Address>) -> ProtocolResul
 fn peer_writer(socket: UdpSocket, peers: Vec<Address>, return_port: u16) -> ProtocolResult<()> {
     loop {
         // Receive message from an application
-        let mut payload = [0; 1019];
+        let mut payload = [0; 1024];
         let (len, _) = socket.recv_from(&mut payload)?;
-        let message = Message::new(payload[0], return_port, payload[1..len].to_vec())?;
+        let mut message = Message::from_bytes(payload[0..len].to_vec())?;
+        message.port = return_port;
 
         // Broadcast message to network
         for peer in &peers {
@@ -45,13 +46,15 @@ fn peer_reader(socket: UdpSocket) -> ProtocolResult<()> {
 
     loop {
         let mut response = [0; 1024];
-        if let Ok((_, address)) = socket.recv_from(&mut response) {
-            let message = Message::from_bytes(response.to_vec())?;
+        if let Ok((len, address)) = socket.recv_from(&mut response) {
+            let message = Message::from_bytes(response[0..len].to_vec())?;
 
-            if message.flags < 128 {
+            if message.flags >= 0x80 {
                 if let Some(mailbox) = mailboxes.get_mut(&message.id) {
-                    let request = mailbox.remove(0);
-                    socket.send_to(&request.as_bytes()?, address)?;
+                    if !mailbox.is_empty() {
+                        let response = mailbox.remove(0);
+                        socket.send_to(&response.as_bytes()?, address)?;
+                    }
                 }
             } else if let Some(mailbox) = mailboxes.get_mut(&message.id) {
                 mailbox.push(message);
