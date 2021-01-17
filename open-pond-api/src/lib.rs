@@ -9,8 +9,16 @@ pub struct RequesterEndpoint {
     requester_endpoint: UdpSocket,
     // Requester write port
     requester_write: u16,
-    // Requester read port
-    requester_read: u16,
+    // Application ID
+    app_id: u8,
+}
+
+/// Structure holding interface networking components
+pub struct ResponseEndpoint {
+    // Response endpoint
+    response_endpoint: UdpSocket,
+    // Response read port
+    response_read: u16,
     // Application ID
     app_id: u8,
 }
@@ -29,13 +37,11 @@ pub struct ServicerEndpoint {
 pub fn new_interface(
     settings: Settings,
     app_id: u8,
-) -> APIResult<(RequesterEndpoint, ServicerEndpoint)> {
+) -> APIResult<(RequesterEndpoint, ServicerEndpoint, ResponseEndpoint)> {
     let requester_socket = UdpSocket::bind("0.0.0.0:0")?;
-    requester_socket.set_read_timeout(Some(Duration::from_millis(100)))?;
     let requester_endpoint = RequesterEndpoint {
         requester_endpoint: requester_socket,
         requester_write: settings.requester_write,
-        requester_read: settings.requester_read,
         app_id,
     };
 
@@ -47,7 +53,15 @@ pub fn new_interface(
         app_id,
     };
 
-    Ok((requester_endpoint, servicer_endpoint))
+    let response_socket = UdpSocket::bind("0.0.0.0:0")?;
+    response_socket.set_read_timeout(Some(Duration::from_millis(100)))?;
+    let response_endpoint = ResponseEndpoint {
+        response_endpoint: response_socket,
+        response_read: settings.requester_read,
+        app_id,
+    };
+
+    Ok((requester_endpoint, servicer_endpoint, response_endpoint))
 }
 
 impl RequesterEndpoint {
@@ -60,7 +74,9 @@ impl RequesterEndpoint {
         )?;
         Ok(())
     }
+}
 
+impl ResponseEndpoint {
     /// Read response from requester mailbox
     pub fn read_response(&self) -> APIResult<Vec<u8>> {
         let mut message = Message::new(self.app_id, Vec::new())?;
@@ -68,12 +84,12 @@ impl RequesterEndpoint {
         let mut data = [0; 1024];
 
         loop {
-            self.requester_endpoint.send_to(
+            self.response_endpoint.send_to(
                 &message.as_bytes()?,
-                format!("0.0.0.0:{}", self.requester_read),
+                format!("0.0.0.0:{}", self.response_read),
             )?;
 
-            if let Ok((len, _)) = self.requester_endpoint.recv_from(&mut data) {
+            if let Ok((len, _)) = self.response_endpoint.recv_from(&mut data) {
                 let message = Message::from_bytes(data[0..len].to_vec())?;
                 return Ok(message.payload);
             }
