@@ -5,6 +5,7 @@ use crate::protocol::ProtocolResult;
 use std::collections::HashMap;
 use std::net::UdpSocket;
 use std::thread;
+use std::time::Duration;
 
 /// Spawns the threads associated with the requester side of the Open Pond Protocol
 pub fn start_requester(settings: Settings, peers: Vec<Address>) -> ProtocolResult<()> {
@@ -39,7 +40,7 @@ fn peer_writer(socket: UdpSocket, peers: Vec<Address>, return_port: u16) -> Prot
 // Process that takes responses to application requests and stores them until requested by the application
 fn peer_reader(socket: UdpSocket) -> ProtocolResult<()> {
     // Avoid stalling waiting for requests that may not come
-    socket.set_nonblocking(true)?;
+    socket.set_read_timeout(Some(Duration::from_millis(1)))?;
 
     // Setup mailbox storage for application responses
     let mut mailboxes: HashMap<u8, Vec<Message>> = HashMap::new();

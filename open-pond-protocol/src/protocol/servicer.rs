@@ -5,6 +5,7 @@ use crate::protocol::ProtocolResult;
 use std::collections::HashMap;
 use std::net::UdpSocket;
 use std::thread;
+use std::time::Duration;
 
 /// Starts the servicer handling threads
 pub fn start_servicer(settings: Settings, local_address: String) -> ProtocolResult<()> {
@@ -57,7 +58,7 @@ pub fn response_handler(
 // Process that takes application requests and stores them until the application is ready to service them
 fn servicer_manager(socket: UdpSocket) -> ProtocolResult<()> {
     // Avoid stalling waiting for requests that may not come
-    socket.set_nonblocking(true)?;
+    socket.set_read_timeout(Some(Duration::from_millis(1)))?;
 
     // Setup mailbox storage for application responses
     let mut mailboxes: HashMap<u8, Vec<Message>> = HashMap::new();
