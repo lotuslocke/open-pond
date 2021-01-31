@@ -20,8 +20,8 @@ pub struct Config {
 pub struct Settings {
     /// Requester write port
     pub requester_write: u16,
-    /// Requester read port
-    pub requester_read: u16,
+    /// Responder read port
+    pub responder_read: u16,
     /// Servicer manager port
     pub servicer_manager: u16,
 }

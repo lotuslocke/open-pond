@@ -11,11 +11,11 @@ use std::time::Duration;
 pub fn start_requester(settings: Settings, peers: Vec<Address>) -> ProtocolResult<()> {
     // Generate request writer for this portal
     let write_socket = UdpSocket::bind(format!("0.0.0.0:{}", settings.requester_write))?;
-    let return_port = settings.requester_read;
+    let return_port = settings.responder_read;
     thread::spawn(move || peer_writer(write_socket, peers, return_port));
 
-    // Generate request reader for this portal
-    let read_socket = UdpSocket::bind(format!("0.0.0.0:{}", settings.requester_read))?;
+    // Generate response reader for this portal
+    let read_socket = UdpSocket::bind(format!("0.0.0.0:{}", settings.responder_read))?;
     thread::spawn(|| peer_reader(read_socket));
 
     Ok(())

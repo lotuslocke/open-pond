@@ -1,18 +1,18 @@
 [settings]
 requester_write = 9090
-requester_read = 9091
+responder_read = 9091
 servicer_manager = 9092
 
 [local]
-address = "127.0.0.1:8081"
+address = "192.168.0.1:8081"
 name = "Antelope"
 
 [[peers]]
-address = "127.0.0.1:8082"
+address = "192.168.0.2:8081"
 name = "Bear"
 
 [[peers]]
-address = "127.0.0.1:8083"
+address = "192.168.0.3:8081"
 name = "Cheetah"
 
 [[apps]]

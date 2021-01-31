@@ -3,17 +3,17 @@ use std::net::{SocketAddr, UdpSocket};
 use std::time::Duration;
 use thiserror::Error;
 
-/// Structure holding interface networking components
-pub struct RequesterEndpoint {
+/// Networking components for Request Endpoint
+pub struct RequestEndpoint {
     // Request endpoint
-    requester_endpoint: UdpSocket,
-    // Requester write port
-    requester_write: u16,
+    request_endpoint: UdpSocket,
+    // Request write port
+    request_write: u16,
     // Application ID
     app_id: u8,
 }
 
-/// Structure holding interface networking components
+/// Networking components for Response Endpoint
 pub struct ResponseEndpoint {
     // Response endpoint
     response_endpoint: UdpSocket,
@@ -23,10 +23,10 @@ pub struct ResponseEndpoint {
     app_id: u8,
 }
 
-/// Structure holding interface networking components
-pub struct ServicerEndpoint {
-    // Servicer endpoint
-    servicer_endpoint: UdpSocket,
+/// Networking components for Service Endpoint
+pub struct ServiceEndpoint {
+    // Service endpoint
+    service_endpoint: UdpSocket,
     // Servicer manager port
     servicer_manager: u16,
     // Application ID
@@ -37,18 +37,18 @@ pub struct ServicerEndpoint {
 pub fn new_interface(
     settings: Settings,
     app_id: u8,
-) -> APIResult<(RequesterEndpoint, ServicerEndpoint, ResponseEndpoint)> {
-    let requester_socket = UdpSocket::bind("0.0.0.0:0")?;
-    let requester_endpoint = RequesterEndpoint {
-        requester_endpoint: requester_socket,
-        requester_write: settings.requester_write,
+) -> APIResult<(RequestEndpoint, ServiceEndpoint, ResponseEndpoint)> {
+    let request_socket = UdpSocket::bind("0.0.0.0:0")?;
+    let request_endpoint = RequestEndpoint {
+        request_endpoint: request_socket,
+        request_write: settings.requester_write,
         app_id,
     };
 
-    let servicer_socket = UdpSocket::bind("0.0.0.0:0")?;
-    servicer_socket.set_read_timeout(Some(Duration::from_millis(100)))?;
-    let servicer_endpoint = ServicerEndpoint {
-        servicer_endpoint: servicer_socket,
+    let service_socket = UdpSocket::bind("0.0.0.0:0")?;
+    service_socket.set_read_timeout(Some(Duration::from_millis(100)))?;
+    let service_endpoint = ServiceEndpoint {
+        service_endpoint: service_socket,
         servicer_manager: settings.servicer_manager,
         app_id,
     };
@@ -57,20 +57,20 @@ pub fn new_interface(
     response_socket.set_read_timeout(Some(Duration::from_millis(100)))?;
     let response_endpoint = ResponseEndpoint {
         response_endpoint: response_socket,
-        response_read: settings.requester_read,
+        response_read: settings.responder_read,
         app_id,
     };
 
-    Ok((requester_endpoint, servicer_endpoint, response_endpoint))
+    Ok((request_endpoint, service_endpoint, response_endpoint))
 }
 
-impl RequesterEndpoint {
+impl RequestEndpoint {
     /// Write request to requester
     pub fn write_request(&self, data: Vec<u8>) -> APIResult<()> {
         let message = Message::new(self.app_id, data)?;
-        self.requester_endpoint.send_to(
+        self.request_endpoint.send_to(
             &message.as_bytes()?,
-            format!("0.0.0.0:{}", self.requester_write),
+            format!("0.0.0.0:{}", self.request_write),
         )?;
         Ok(())
     }
@@ -97,7 +97,7 @@ impl ResponseEndpoint {
     }
 }
 
-impl ServicerEndpoint {
+impl ServiceEndpoint {
     /// Read request from the servicer
     pub fn read_request(&self) -> APIResult<(Vec<u8>, SocketAddr)> {
         let mut message = Message::new(self.app_id, Vec::new())?;
@@ -105,11 +105,11 @@ impl ServicerEndpoint {
         let mut data = [0; 1024];
 
         loop {
-            self.servicer_endpoint.send_to(
+            self.service_endpoint.send_to(
                 &message.as_bytes()?,
                 format!("0.0.0.0:{}", self.servicer_manager),
             )?;
-            if let Ok((len, mut address)) = self.servicer_endpoint.recv_from(&mut data) {
+            if let Ok((len, mut address)) = self.service_endpoint.recv_from(&mut data) {
                 let message = Message::from_bytes(data[0..len].to_vec())?;
                 address.set_port(message.port);
                 return Ok((message.payload, address));
@@ -120,7 +120,7 @@ impl ServicerEndpoint {
     /// Write response back to requester
     pub fn write_response(&self, return_address: SocketAddr, data: Vec<u8>) -> APIResult<()> {
         let message = Message::new(self.app_id, data)?;
-        self.servicer_endpoint
+        self.service_endpoint
             .send_to(&message.as_bytes()?, return_address)?;
         Ok(())
     }

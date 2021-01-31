@@ -1,4 +1,4 @@
-use open_pond_api::{new_interface, RequesterEndpoint, ResponseEndpoint, ServicerEndpoint};
+use open_pond_api::{new_interface, RequestEndpoint, ResponseEndpoint, ServiceEndpoint};
 use open_pond_protocol::parse_config;
 
 use std::collections::HashMap;
@@ -42,7 +42,8 @@ fn main() {
     }
 }
 
-fn request_updates(endpoint: RequesterEndpoint, requester_name: String) {
+// This thread is responsible for sending requests to other users
+fn request_updates(endpoint: RequestEndpoint, requester_name: String) {
     loop {
         thread::sleep(time::Duration::new(1, 0));
         endpoint
@@ -51,7 +52,8 @@ fn request_updates(endpoint: RequesterEndpoint, requester_name: String) {
     }
 }
 
-fn service(endpoint: ServicerEndpoint, last_message: Arc<Mutex<(u8, String)>>) {
+// This thread is responsible for parsing requests and responding back to them
+fn service(endpoint: ServiceEndpoint, last_message: Arc<Mutex<(u8, String)>>) {
     let mut peer_requests: HashMap<String, u8> = HashMap::new();
     loop {
         let (request, return_address) = endpoint.read_request().unwrap();
@@ -75,6 +77,7 @@ fn service(endpoint: ServicerEndpoint, last_message: Arc<Mutex<(u8, String)>>) {
     }
 }
 
+// This thread is responsible for checking responses
 fn receive_updates(endpoint: ResponseEndpoint) {
     loop {
         let response = endpoint.read_response().unwrap();

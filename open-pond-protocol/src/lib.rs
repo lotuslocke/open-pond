@@ -2,6 +2,7 @@
 mod config;
 mod message;
 mod protocol;
+mod tests;
 
 pub use crate::config::*;
 pub use crate::message::{Message, MessageError};
