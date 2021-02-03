@@ -5,6 +5,9 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::{env, io, thread, time};
 
+const NEW: u8 = 1;
+const OLD: u8 = 0;
+
 fn main() {
     // Attempt parse of Open Pond configuration file
     let config_file = env::args()
@@ -29,7 +32,6 @@ fn main() {
 
     // Store messages from standard input
     loop {
-        thread::sleep(time::Duration::new(1, 0));
         let mut input = String::new();
         if io::stdin().read_line(&mut input).is_ok() {
             let message = format!("{}: {}", name, input);
@@ -60,15 +62,19 @@ fn service(endpoint: ServiceEndpoint, last_message: Arc<Mutex<(u8, String)>>) {
         let peer_name = String::from_utf8(request).unwrap();
 
         if let Ok(lock) = last_message.lock() {
-            let mut response = vec![0; 1];
+            let mut response = vec![OLD; 1];
+
+            // Add message to response if requester has not seen it before
             if let Some(request_id) = peer_requests.get_mut(&peer_name) {
                 if *request_id != lock.0 {
-                    response[0] = 1;
+                    response[0] = NEW;
                     response.append(&mut lock.1.as_bytes().to_vec());
                     *request_id = lock.0;
                 }
+
+            // Add message to response if the requester is new
             } else {
-                response[0] = 1;
+                response[0] = NEW;
                 response.append(&mut lock.1.as_bytes().to_vec());
                 peer_requests.insert(peer_name, lock.0);
             }
@@ -81,7 +87,7 @@ fn service(endpoint: ServiceEndpoint, last_message: Arc<Mutex<(u8, String)>>) {
 fn receive_updates(endpoint: ResponseEndpoint) {
     loop {
         let response = endpoint.read_response().unwrap();
-        if response[0] != 0 {
+        if response[0] != OLD {
             println!(
                 "{}",
                 String::from_utf8(response[1..response.len()].to_vec()).unwrap()

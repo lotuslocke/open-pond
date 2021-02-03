@@ -117,7 +117,7 @@ impl ServiceEndpoint {
         }
     }
 
-    /// Write response back to requester
+    /// Write response back to requesting peer
     pub fn write_response(&self, return_address: SocketAddr, data: Vec<u8>) -> APIResult<()> {
         let message = Message::new(self.app_id, data)?;
         self.service_endpoint

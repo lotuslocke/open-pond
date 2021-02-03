@@ -12,8 +12,8 @@ programming language and the Cargo package manager to build binaries.
 
 ## Usage
 
-Once the environment has been configured, compile and run the binary, entering the selected address
-and port of your node as the first argument and the target node as the second argument:
+Once the environment has been configured, compile and run the binary, entering the configuration
+file as the only argument. Information on how to format the configuration file can be found below.
 
 ```
 // Command to run (Example Node)
@@ -23,7 +23,7 @@ cargo run config/example.toml
 This command will start a node and if connected to another node will enable communication between
 the two nodes. In order for anything useful to be communicated, each node needs to have 1 or more
 applications connected to their node. The applications must have matching IDs to communicate. These
-IDs can be configured in the node configuration file described later in this document. To run the
+IDs can be set in the node configuration file described later in this document. To run the
 Akron example application, use the following command:
 
 ```
@@ -53,8 +53,7 @@ servicer_manager = 9092
 ### Local
 The local section of the configuration file is used to define an individual user's node. The
 address field is used to define the IP address and port of the public facing endpoint of the
-application servicer. The name field ties a human readable string to the address. 
-
+application servicer. The name field ties a human readable string to the address.
 
 ```
 [local]
@@ -80,9 +79,9 @@ name = "Cheetah"
 ```
 
 ### Apps
-The apps section of the configuration file is used to identify one or more app nodes. All apps need
-double brackets for the same reason as the peers section. The ID field is used to distinguish apps
-from each other. In order to connect to the same application on another node, the ID must be
+The apps section of the configuration file is used to identify one or more applications. All apps
+need double brackets for the same reason as the peers section. The ID field is used to distinguish
+apps from each other. In order to connect to the same application on another node, the ID must be
 matching. The name field provides a human readable string to associate with that application ID.
 
 ```
