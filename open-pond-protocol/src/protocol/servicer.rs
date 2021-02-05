@@ -68,6 +68,8 @@ fn servicer_manager(socket: UdpSocket) -> ProtocolResult<()> {
         if let Ok((len, address)) = socket.recv_from(&mut request) {
             let message = Message::from_bytes(request[0..len].to_vec())?;
 
+            // If message is a internal request for request data, get next
+            // request from the mailbox if available
             if message.flags >= 0x80 {
                 if let Some(mailbox) = mailboxes.get_mut(&message.id) {
                     if !mailbox.is_empty() {
@@ -75,6 +77,9 @@ fn servicer_manager(socket: UdpSocket) -> ProtocolResult<()> {
                         socket.send_to(&request.as_bytes()?, address)?;
                     }
                 }
+
+            // If the message is external request, add to mailbox and create
+            // mailbox if needed
             } else if let Some(mailbox) = mailboxes.get_mut(&message.id) {
                 mailbox.push(message);
             } else {

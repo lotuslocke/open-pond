@@ -7,7 +7,7 @@ use std::net::UdpSocket;
 use std::thread;
 use std::time::Duration;
 
-/// Spawns the threads associated with the requester side of the Open Pond Protocol
+/// Spawns the threads associated with the client side of the Open Pond Protocol
 pub fn start_requester(settings: Settings, peers: Vec<Address>) -> ProtocolResult<()> {
     // Generate request writer for this portal
     let write_socket = UdpSocket::bind(format!("0.0.0.0:{}", settings.requester_write))?;
@@ -50,6 +50,8 @@ fn peer_reader(socket: UdpSocket) -> ProtocolResult<()> {
         if let Ok((len, address)) = socket.recv_from(&mut response) {
             let message = Message::from_bytes(response[0..len].to_vec())?;
 
+            // If message is a request for response data, get next response
+            // from the mailbox if available
             if message.flags >= 0x80 {
                 if let Some(mailbox) = mailboxes.get_mut(&message.id) {
                     if !mailbox.is_empty() {
@@ -57,6 +59,9 @@ fn peer_reader(socket: UdpSocket) -> ProtocolResult<()> {
                         socket.send_to(&response.as_bytes()?, address)?;
                     }
                 }
+
+            // If the message is a response, add to mailbox and create mailbox
+            // if needed
             } else if let Some(mailbox) = mailboxes.get_mut(&message.id) {
                 mailbox.push(message);
             } else {

@@ -1,7 +1,7 @@
-use crate::message::MessageError;
-
 pub mod requester;
 pub mod servicer;
+
+use crate::message::MessageError;
 
 use thiserror::Error;
 

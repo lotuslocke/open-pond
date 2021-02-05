@@ -11,12 +11,12 @@ pub struct Config {
     pub local: Address,
     /// Addresses of the peer computers
     pub peers: Vec<Address>,
-    /// Applications detail
+    /// Application details
     pub apps: Vec<Application>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
-/// Structure to Open Pond Protocol settings
+/// Structure to hold Open Pond Protocol settings
 pub struct Settings {
     /// Requester write port
     pub requester_write: u16,

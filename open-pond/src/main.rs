@@ -18,7 +18,7 @@ fn main() -> ProtocolResult<()> {
     let servicer_handle = thread::spawn(|| start_servicer(servicer_settings, servicer_address));
     println!("Open Pond Node started: {}", config.local.name);
 
-    // Start requester
+    // Start requester and responder
     let requester_settings = config.settings.clone();
     thread::spawn(|| start_requester(requester_settings, config.peers));
 

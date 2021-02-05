@@ -83,5 +83,5 @@ pub enum MessageError {
     PacketFailedWrite(#[from] std::io::Error),
 }
 
-// Convenience alias for Message results
+// Convenience alias for Message Results
 type MessageResult<T> = Result<T, MessageError>;
