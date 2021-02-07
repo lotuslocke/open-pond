@@ -1,20 +1,26 @@
-use open_pond_protocol::{start_peer_pool, start_servicer};
+use open_pond_protocol::ProtocolResult;
+use open_pond_protocol::{parse_config, start_requester, start_servicer};
 use std::env;
 use std::thread;
 
 /// Thread that starts an active Open Pond node
-fn main() -> std::io::Result<()> {
-    let server_address = env::args()
+fn main() -> ProtocolResult<()> {
+    let config_file = env::args()
         .nth(1)
-        .unwrap_or_else(|| "127.0.0.1:8080".to_string());
-    let peer_address = env::args()
-        .nth(2)
-        .unwrap_or_else(|| "127.0.0.1:8081".to_string());
+        .unwrap_or_else(|| "config/example.toml".to_string());
 
-    let servicer_handle = thread::spawn(|| start_servicer(server_address));
-    println!("Open Pond node started");
+    // Build configuration structure
+    let config = parse_config(config_file)?;
 
-    start_peer_pool(peer_address)?;
+    // Start servicer
+    let servicer_settings = config.settings.clone();
+    let servicer_address = config.local.address.clone();
+    let servicer_handle = thread::spawn(|| start_servicer(servicer_settings, servicer_address));
+    println!("Open Pond Node started: {}", config.local.name);
+
+    // Start requester and responder
+    let requester_settings = config.settings.clone();
+    thread::spawn(|| start_requester(requester_settings, config.peers));
 
     match servicer_handle.join() {
         Ok(_) => (),

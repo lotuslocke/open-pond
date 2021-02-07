@@ -1,8 +1,14 @@
 [package]
-name = "open-pond"
+name = "examples"
 version = "0.1.0"
 authors = ["William Greer <wgreer184@gmail.com>"]
+publish = false
 edition = "2018"
 
-[dependencies]
+[dev-dependencies]
 open-pond-protocol = { path = "../open-pond-protocol", version = "0.1.0"}
+open-pond-api = { path = "../open-pond-api", version = "0.1.0"}
+
+[[example]]
+name = "akron"
+path = "akron/main.rs"

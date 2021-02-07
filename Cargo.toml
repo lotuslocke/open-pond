@@ -1,5 +1,7 @@
 [workspace]
 members = [
-    "open-pond-protocol",
-    "open-pond"
+    "examples",
+    "open-pond",  
+    "open-pond-api",
+    "open-pond-protocol"
 ]
