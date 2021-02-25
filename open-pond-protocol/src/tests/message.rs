@@ -41,6 +41,24 @@ fn from_bytes_message_success() {
 }
 
 #[test]
+fn from_bytes_minimum_message_success() {
+    let raw = vec![0; MIN_PACKET_SIZE];
+
+    let result = Message::from_bytes(raw);
+
+    assert!(result.is_ok());
+}
+
+#[test]
+fn from_bytes_maximum_message_success() {
+    let raw = vec![0; MAX_PACKET_SIZE];
+
+    let result = Message::from_bytes(raw);
+
+    assert!(result.is_ok());
+}
+
+#[test]
 fn from_bytes_message_vector_too_large() {
     let size = MAX_PACKET_SIZE + 1;
     let raw = vec![0; size];
@@ -70,6 +88,22 @@ fn as_bytes_message_success() {
         payload: vec![1],
     };
     let expected = vec![1, 128, 1, 0, 0, 1, 1];
+
+    let raw = message.as_bytes().unwrap();
+
+    assert_eq!(raw, expected);
+}
+
+#[test]
+fn as_bytes_minimum_message_success() {
+    let message = Message {
+        id: 1,
+        flags: 128,
+        port: 256,
+        length: 0,
+        payload: vec![],
+    };
+    let expected = vec![1, 128, 1, 0, 0, 0];
 
     let raw = message.as_bytes().unwrap();
 

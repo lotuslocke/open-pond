@@ -1,6 +1,5 @@
 use serde::Deserialize;
-use std::fs::File;
-use std::io::Read;
+use std::fs;
 
 #[derive(Deserialize, Debug)]
 /// Structure to hold Open Pond Node configuration
@@ -46,8 +45,7 @@ pub struct Application {
 
 /// Parse file to put out configuration data
 pub fn parse_config(file: String) -> std::io::Result<Config> {
-    let mut text = String::new();
-    File::open(file)?.read_to_string(&mut text)?;
+    let text = fs::read_to_string(file)?;
     let config: Config = toml::from_str(&text)?;
     Ok(config)
 }
