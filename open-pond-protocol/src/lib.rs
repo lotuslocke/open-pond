@@ -1,5 +1,6 @@
 //! Library that implements the Open Pond Protocol
 mod config;
+mod crypto;
 mod message;
 mod protocol;
 mod tests;
