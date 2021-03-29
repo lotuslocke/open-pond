@@ -1,3 +1,4 @@
+pub mod processor;
 pub mod requester;
 pub mod servicer;
 

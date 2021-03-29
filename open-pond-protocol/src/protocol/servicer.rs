@@ -1,5 +1,6 @@
 use crate::config::Settings;
 use crate::message::Message;
+use crate::protocol::processor::process_external;
 use crate::protocol::ProtocolResult;
 
 use std::collections::HashMap;
@@ -70,7 +71,7 @@ fn servicer_manager(socket: UdpSocket) -> ProtocolResult<()> {
 
             // If message is a internal request for request data, get next
             // request from the mailbox if available
-            if message.flags >= 0x80 {
+            if (message.flags & 0x80) > 0 {
                 if let Some(mailbox) = mailboxes.get_mut(&message.id) {
                     if !mailbox.is_empty() {
                         let request = mailbox.remove(0);
@@ -78,15 +79,10 @@ fn servicer_manager(socket: UdpSocket) -> ProtocolResult<()> {
                     }
                 }
 
-            // If the message is external request, add to mailbox and create
-            // mailbox if needed
-            } else if let Some(mailbox) = mailboxes.get_mut(&message.id) {
-                mailbox.push(message);
+            // If the message is a external request, add to mailbox and
+            // create mailbox if needed
             } else {
-                let mut mailbox = Vec::new();
-                let id = message.id;
-                mailbox.push(message);
-                mailboxes.insert(id, mailbox);
+                process_external(&mut mailboxes, message);
             }
         }
     }

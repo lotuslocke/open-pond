@@ -1,4 +1,4 @@
-use open_pond_protocol::{Message, MessageError, Settings};
+use open_pond_protocol::{AuthKey, CryptoError, Message, MessageError, Settings};
 use std::net::{SocketAddr, UdpSocket};
 use std::time::Duration;
 use thiserror::Error;
@@ -62,6 +62,12 @@ pub fn new_interface(
     };
 
     Ok((request_endpoint, service_endpoint, response_endpoint))
+}
+
+/// Get user's public key
+pub fn get_public_key() -> APIResult<Vec<u8>> {
+    let keypair = AuthKey::load()?;
+    Ok(keypair.get_public())
 }
 
 impl RequestEndpoint {
@@ -133,6 +139,8 @@ pub enum APIError {
     SocketIO(#[from] std::io::Error),
     #[error("Failure with message formatting")]
     InvalidMessage(#[from] MessageError),
+    #[error("Failure with loading public key")]
+    PublicKey(#[from] CryptoError),
 }
 
 // Convenience alias for API results

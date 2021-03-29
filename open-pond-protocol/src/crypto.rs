@@ -29,7 +29,7 @@ impl AuthKey {
     // Function used to generate and save new keypair
     pub fn generate() -> CryptoResult<MiniSecretKey> {
         let key = MiniSecretKey::generate_with(OsRng);
-        if let Err(_) = fs::write("private/auth-keypair", key.as_bytes()) {
+        if fs::write("private/auth-keypair", key.as_bytes()).is_err() {
             return Err(CryptoError::FailedSeedGeneration);
         };
         Ok(key)

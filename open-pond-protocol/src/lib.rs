@@ -6,6 +6,7 @@ mod protocol;
 mod tests;
 
 pub use crate::config::*;
+pub use crate::crypto::{AuthKey, CryptoError};
 pub use crate::message::{Message, MessageError};
 pub use crate::protocol::requester::start_requester;
 pub use crate::protocol::servicer::start_servicer;

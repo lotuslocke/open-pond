@@ -6,10 +6,10 @@ use std::fs;
 pub struct Config {
     /// Protocol configuration settings
     pub settings: Settings,
-    /// Address of the local computer
-    pub local: Address,
-    /// Addresses of the peer computers
-    pub peers: Vec<Address>,
+    /// Local host attributes
+    pub local: Local,
+    /// Peer computer attributes
+    pub peers: Vec<Peer>,
     /// Application details
     pub apps: Vec<Application>,
 }
@@ -26,9 +26,18 @@ pub struct Settings {
 }
 
 #[derive(Deserialize, Debug, Clone)]
-/// Structure to hold address information of Open Pond Nodes
-pub struct Address {
-    /// Address of node (IP:Port)
+/// Structure to hold local host information
+pub struct Local {
+    /// Socket address of node (IP:Port)
+    pub address: String,
+    /// Human readable identifier
+    pub name: String,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+/// Structure to hold Peer information
+pub struct Peer {
+    /// Socket address of node (IP:Port)
     pub address: String,
     /// Human readable identifier
     pub name: String,
