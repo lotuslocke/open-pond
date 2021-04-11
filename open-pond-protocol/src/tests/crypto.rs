@@ -1,5 +1,7 @@
 #[cfg(test)]
 use crate::crypto::AuthKey;
+#[cfg(test)]
+use serial_test::serial;
 
 // Helper function to setup initial authentication key
 #[cfg(test)]
@@ -15,6 +17,7 @@ fn teardown_auth() {
 }
 
 #[test]
+#[serial]
 fn load_success_generation() {
     setup_auth();
 
@@ -26,6 +29,7 @@ fn load_success_generation() {
 }
 
 #[test]
+#[serial]
 fn load_success_from_file() {
     setup_auth();
 
@@ -38,6 +42,7 @@ fn load_success_from_file() {
 }
 
 #[test]
+#[serial]
 fn sign_and_verify_success() {
     setup_auth();
 
@@ -54,6 +59,7 @@ fn sign_and_verify_success() {
 }
 
 #[test]
+#[serial]
 fn sign_and_verify_invalid_signature() {
     setup_auth();
 
