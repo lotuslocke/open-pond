@@ -1,6 +1,6 @@
 use crate::config::Settings;
 use crate::message::Message;
-use crate::protocol::processor::process_external;
+use crate::protocol::processor::process_request;
 use crate::protocol::ProtocolResult;
 
 use std::collections::HashMap;
@@ -32,6 +32,7 @@ pub fn servicer(socket: UdpSocket, manager_port: u16) -> ProtocolResult<()> {
         // Validate message and spawn response handler
         let message = Message::from_bytes(request[0..len].to_vec())?;
         let return_address = format!("{}:{}", address.ip(), message.port);
+
         thread::spawn(move || response_handler(message, return_address, manager_port));
     }
 }
@@ -49,10 +50,17 @@ pub fn response_handler(
     message.port = socket.local_addr()?.port();
     socket.send_to(&message.as_bytes()?, manager_address)?;
 
-    // Receive response back from application and send back to peers
+    // Receive response back from application
     let mut response = [0; 1024];
-    let (len, _) = socket.recv_from(&mut response)?;
-    socket.send_to(&response[0..len], return_address)?;
+    socket.recv_from(&mut response)?;
+
+    // Perform protocol functions
+    let mut return_message = Message::from_bytes(response.to_vec())?;
+    return_message.index = message.index;
+    return_message.flags &= 0x40;
+    return_message.sign()?;
+
+    socket.send_to(&return_message.as_bytes()?, return_address)?;
     Ok(())
 }
 
@@ -82,7 +90,7 @@ fn servicer_manager(socket: UdpSocket) -> ProtocolResult<()> {
             // If the message is a external request, add to mailbox and
             // create mailbox if needed
             } else {
-                process_external(&mut mailboxes, message);
+                process_request(&mut mailboxes, message);
             }
         }
     }

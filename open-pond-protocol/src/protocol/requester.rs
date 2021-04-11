@@ -1,6 +1,6 @@
 use crate::config::{Peer, Settings};
 use crate::message::Message;
-use crate::protocol::processor::process_external;
+use crate::protocol::processor::process_response;
 use crate::protocol::ProtocolResult;
 
 use std::collections::HashMap;
@@ -13,11 +13,12 @@ pub fn start_requester(settings: Settings, peers: Vec<Peer>) -> ProtocolResult<(
     // Generate request writer for this portal
     let write_socket = UdpSocket::bind(format!("0.0.0.0:{}", settings.requester_write))?;
     let return_port = settings.responder_read;
-    thread::spawn(move || peer_writer(write_socket, peers, return_port));
+    let servicers = peers.clone();
+    thread::spawn(move || peer_writer(write_socket, servicers, return_port));
 
     // Generate response reader for this portal
     let read_socket = UdpSocket::bind(format!("0.0.0.0:{}", settings.responder_read))?;
-    thread::spawn(|| peer_reader(read_socket));
+    thread::spawn(|| peer_reader(read_socket, peers));
 
     Ok(())
 }
@@ -31,18 +32,16 @@ fn peer_writer(socket: UdpSocket, peers: Vec<Peer>, return_port: u16) -> Protoco
         let mut message = Message::from_bytes(payload[0..len].to_vec())?;
         message.port = return_port;
 
-        // Sign message with signature
-        message.sign()?;
-
         // Broadcast message to network
-        for peer in &peers {
+        for (i, peer) in peers.iter().enumerate() {
+            message.index = i as u8;
             socket.send_to(&message.as_bytes()?, peer.address.clone())?;
         }
     }
 }
 
 // Process that takes responses to application requests and stores them until requested by the application
-fn peer_reader(socket: UdpSocket) -> ProtocolResult<()> {
+fn peer_reader(socket: UdpSocket, peers: Vec<Peer>) -> ProtocolResult<()> {
     // Avoid stalling waiting for requests that may not come
     socket.set_read_timeout(Some(Duration::from_millis(1)))?;
 
@@ -67,7 +66,8 @@ fn peer_reader(socket: UdpSocket) -> ProtocolResult<()> {
             // If the message is a response, add to mailbox and create mailbox
             // if needed
             } else {
-                process_external(&mut mailboxes, message);
+                let peer = &peers[message.index as usize];
+                process_response(&mut mailboxes, message, &peer);
             }
         }
     }

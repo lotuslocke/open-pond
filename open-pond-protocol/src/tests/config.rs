@@ -7,6 +7,8 @@ fn parse_config_success() {
 
     let result = parse_config(file);
 
+    println!("{:?}", result);
+
     assert!(result.is_ok());
 }
 

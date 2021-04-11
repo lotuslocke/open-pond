@@ -2,9 +2,9 @@ use crate::crypto::{AuthKey, CryptoError};
 use byteorder::{BigEndian, ByteOrder, WriteBytesExt};
 use thiserror::Error;
 
-pub const MIN_PACKET_SIZE: usize = 38;
+pub const MIN_PACKET_SIZE: usize = 40;
 pub const MAX_PACKET_SIZE: usize = 2048;
-pub const MAX_PAYLOAD_SIZE: usize = 2010;
+pub const MAX_PAYLOAD_SIZE: usize = 2008;
 
 /// Structure to hold Open Pond Protocol messages
 #[derive(Clone, Debug)]
@@ -15,6 +15,10 @@ pub struct Message {
     // 0x80 = Mailbox check
     // 0x40 = Signature check
     pub flags: u8,
+    /// Parameter to allow for segmentation
+    pub index: u8,
+    /// Parameter to allow for different message types
+    pub class: u8,
     /// Response return port
     pub port: u16,
     /// Length of the message
@@ -37,6 +41,8 @@ impl Message {
         Ok(Message {
             id,
             flags: 0,
+            index: 0,
+            class: 0,
             port: 0,
             length: payload.len() as u16,
             signature: vec![0; 32],
@@ -55,10 +61,12 @@ impl Message {
         Ok(Message {
             id: bytes[0],
             flags: bytes[1],
-            port: BigEndian::read_u16(&bytes[2..4]),
-            length: BigEndian::read_u16(&bytes[4..6]),
-            signature: bytes[6..38].to_vec(),
-            payload: bytes[38..].to_vec(),
+            index: bytes[2],
+            class: bytes[3],
+            port: BigEndian::read_u16(&bytes[4..6]),
+            length: BigEndian::read_u16(&bytes[6..8]),
+            signature: bytes[8..40].to_vec(),
+            payload: bytes[40..].to_vec(),
         })
     }
 
@@ -68,6 +76,8 @@ impl Message {
 
         packet.push(self.id);
         packet.push(self.flags);
+        packet.push(self.index);
+        packet.push(self.class);
         packet.write_u16::<BigEndian>(self.port)?;
         packet.write_u16::<BigEndian>(self.length)?;
         packet.extend(self.signature.clone());
@@ -95,11 +105,11 @@ impl Message {
 #[derive(Error, Debug)]
 /// Errors generated from Open Pond message operations
 pub enum MessageError {
-    #[error("Minimum packet size (6) not met: {}", size)]
+    #[error("Minimum packet size (40) not met: {}", size)]
     MinPacketSizeNotMet { size: usize },
-    #[error("Maximum packet size (1024) exceeded: {}", size)]
+    #[error("Maximum packet size (2048) exceeded: {}", size)]
     MaxPacketSizeExceeded { size: usize },
-    #[error("Maximum payload size (1018) exceeded: {}", size)]
+    #[error("Maximum payload size (2008) exceeded: {}", size)]
     PayloadSizeExceeded { size: usize },
     #[error("Failed to write to packet")]
     PacketFailedWrite(#[from] std::io::Error),

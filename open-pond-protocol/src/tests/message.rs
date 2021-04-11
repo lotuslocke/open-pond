@@ -29,8 +29,8 @@ fn new_message_payload_too_large() {
 #[test]
 fn from_bytes_message_success() {
     let raw = vec![
-        1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
     ];
     let expected_id = 1;
     let expected_length = 1;
@@ -86,6 +86,8 @@ fn as_bytes_message_success() {
     let message = Message {
         id: 1,
         flags: 128,
+        index: 0,
+        class: 0,
         port: 256,
         length: 1,
         signature: vec![0; 32],
@@ -93,8 +95,8 @@ fn as_bytes_message_success() {
     };
 
     let expected = vec![
-        1, 128, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 128, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
     ];
 
     let raw = message.as_bytes().unwrap();
@@ -107,6 +109,8 @@ fn as_bytes_minimum_message_success() {
     let message = Message {
         id: 1,
         flags: 128,
+        index: 0,
+        class: 0,
         port: 256,
         length: 0,
         signature: vec![0; 32],
@@ -114,8 +118,8 @@ fn as_bytes_minimum_message_success() {
     };
 
     let expected = vec![
-        1, 128, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
+        1, 128, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     ];
 
     let raw = message.as_bytes().unwrap();
