@@ -57,7 +57,6 @@ pub fn response_handler(
     // Perform protocol functions
     let mut return_message = Message::from_bytes(response.to_vec())?;
     return_message.index = message.index;
-    return_message.flags &= 0x40;
     return_message.sign()?;
 
     socket.send_to(&return_message.as_bytes()?, return_address)?;

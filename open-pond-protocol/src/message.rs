@@ -2,9 +2,9 @@ use crate::crypto::{AuthKey, CryptoError};
 use byteorder::{BigEndian, ByteOrder, WriteBytesExt};
 use thiserror::Error;
 
-pub const MIN_PACKET_SIZE: usize = 40;
+pub const MIN_PACKET_SIZE: usize = 72;
 pub const MAX_PACKET_SIZE: usize = 2048;
-pub const MAX_PAYLOAD_SIZE: usize = 2008;
+pub const MAX_PAYLOAD_SIZE: usize = 1976;
 
 /// Structure to hold Open Pond Protocol messages
 #[derive(Clone, Debug)]
@@ -45,7 +45,7 @@ impl Message {
             class: 0,
             port: 0,
             length: payload.len() as u16,
-            signature: vec![0; 32],
+            signature: vec![0; 64],
             payload,
         })
     }
@@ -65,8 +65,8 @@ impl Message {
             class: bytes[3],
             port: BigEndian::read_u16(&bytes[4..6]),
             length: BigEndian::read_u16(&bytes[6..8]),
-            signature: bytes[8..40].to_vec(),
-            payload: bytes[40..].to_vec(),
+            signature: bytes[8..72].to_vec(),
+            payload: bytes[72..].to_vec(),
         })
     }
 
@@ -105,11 +105,11 @@ impl Message {
 #[derive(Error, Debug)]
 /// Errors generated from Open Pond message operations
 pub enum MessageError {
-    #[error("Minimum packet size (40) not met: {}", size)]
+    #[error("Minimum packet size (72) not met: {}", size)]
     MinPacketSizeNotMet { size: usize },
     #[error("Maximum packet size (2048) exceeded: {}", size)]
     MaxPacketSizeExceeded { size: usize },
-    #[error("Maximum payload size (2008) exceeded: {}", size)]
+    #[error("Maximum payload size (1976) exceeded: {}", size)]
     PayloadSizeExceeded { size: usize },
     #[error("Failed to write to packet")]
     PacketFailedWrite(#[from] std::io::Error),

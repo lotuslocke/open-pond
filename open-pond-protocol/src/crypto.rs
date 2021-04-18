@@ -29,6 +29,9 @@ impl AuthKey {
     // Function used to generate and save new keypair
     pub fn generate() -> CryptoResult<MiniSecretKey> {
         let key = MiniSecretKey::generate_with(OsRng);
+        if fs::create_dir_all("private").is_err() {
+            return Err(CryptoError::InvalidPrivateDirectory);
+        };
         if fs::write("private/auth-keypair", key.as_bytes()).is_err() {
             return Err(CryptoError::FailedSeedGeneration);
         };
@@ -74,6 +77,8 @@ impl PartialEq for AuthKey {
 pub enum CryptoError {
     #[error("Failed to load stored seed - invalid format")]
     InvalidSeedFormat,
+    #[error("Failed to create or access privacy directory")]
+    InvalidPrivateDirectory,
     #[error("Failed to generate new seed - failed save")]
     FailedSeedGeneration,
     #[error("Error deserializing crypto component from bytearray: {}", err)]

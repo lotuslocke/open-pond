@@ -43,6 +43,16 @@ fn load_success_from_file() {
 
 #[test]
 #[serial]
+fn load_success_no_private_directory() {
+    let auth_key = AuthKey::load();
+
+    assert!(auth_key.is_ok());
+
+    teardown_auth();
+}
+
+#[test]
+#[serial]
 fn sign_and_verify_success() {
     setup_auth();
 

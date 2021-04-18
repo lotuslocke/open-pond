@@ -130,6 +130,19 @@ impl ServiceEndpoint {
             .send_to(&message.as_bytes()?, return_address)?;
         Ok(())
     }
+
+    /// Write signed response back to requesting peer
+    pub fn write_signed_response(
+        &self,
+        return_address: SocketAddr,
+        data: Vec<u8>,
+    ) -> APIResult<()> {
+        let mut message = Message::new(self.app_id, data)?;
+        message.flags = 0x40;
+        self.service_endpoint
+            .send_to(&message.as_bytes()?, return_address)?;
+        Ok(())
+    }
 }
 
 #[derive(Error, Debug)]
