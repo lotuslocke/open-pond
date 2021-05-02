@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <button onclick="getKey()">
+            Display Your Public Key
+        </button>
+
+        <p id="displayKey"></p>
+
+        <script>
+            function getKey() {
+                window.external.invoke('getKey')
+            }
+
+            function displayKey(keyString) {
+                var display = document.getElementById('displayKey');
+                display.innerText = "Your key is: " + keyString
+                document.body.appendChild(display);
+            }
+
+            function updateNumber(count) {
+                var counter = document.getElementById('counter');
+                counter.innerText = "Update Number: " + count;
+                document.body.appendChild(counter);
+                setTimeout(timer, 1000);
+             }
+             function timer() {
+                window.external.invoke('update');
+             }
+        </script>
+    </body>
+</html>

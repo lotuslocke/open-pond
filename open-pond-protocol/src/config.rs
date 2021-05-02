@@ -42,7 +42,7 @@ pub struct Peer {
     /// Human readable identifier
     pub name: String,
     /// Authentication public key
-    pub pubkey: Vec<u8>,
+    pub pubkey: String,
 }
 
 #[derive(Deserialize, Debug, Clone)]

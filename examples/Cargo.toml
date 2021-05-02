@@ -6,9 +6,15 @@ publish = false
 edition = "2018"
 
 [dev-dependencies]
+askama = "0.10.5"
 open-pond-protocol = { path = "../open-pond-protocol", version = "0.1.0"}
 open-pond-api = { path = "../open-pond-api", version = "0.1.0"}
+web-view = "0.7.3"
 
 [[example]]
 name = "akron"
 path = "akron/main.rs"
+
+[[example]]
+name = "beavercreek"
+path = "beavercreek/main.rs"

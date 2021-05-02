@@ -65,9 +65,9 @@ pub fn new_interface(
 }
 
 /// Get user's public key
-pub fn get_public_key() -> APIResult<Vec<u8>> {
+pub fn get_public_key() -> APIResult<String> {
     let keypair = AuthKey::load()?;
-    Ok(keypair.get_public())
+    Ok(base64::encode(keypair.get_public()))
 }
 
 impl RequestEndpoint {

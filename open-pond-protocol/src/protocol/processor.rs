@@ -19,8 +19,11 @@ pub fn process_request(mailboxes: &mut HashMap<u8, Vec<Message>>, message: Messa
 /// Processor function to validate and verify incoming responses
 pub fn process_response(mailboxes: &mut HashMap<u8, Vec<Message>>, message: Message, peer: &Peer) {
     // Validate signatures from servicer
-    if (message.flags & 0x40) > 0 && message.verify(peer.pubkey.clone()).is_err() {
-        return;
+    if (message.flags & 0x40) > 0 {
+        let pubkey = base64::decode(peer.pubkey.clone()).unwrap_or_default();
+        if message.verify(pubkey).is_err() {
+            return;
+        }
     }
 
     // Place message into mailbox
